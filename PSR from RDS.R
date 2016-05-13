@@ -28,7 +28,7 @@ dir.create(file.path(data_path), showWarnings = FALSE, recursive = FALSE, mode =
 dir.create(file.path(share_path), showWarnings = FALSE, recursive = FALSE, mode = "0777")
 
 load(file.path(data.path, "PSRPrelim.RData"))
-save(file.path(data.path, "PSRPrelim.RData"))
+save(file.path(data.path, "PSRPrelim.rds"))
 
 x3$Event.MON=as.character(x3$Event.MON)
 #x3=filter(x3, x31$Event.MON=="2015-12")  #This is crashing system... why?

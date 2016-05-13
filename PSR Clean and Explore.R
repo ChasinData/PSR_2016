@@ -43,9 +43,12 @@ Parent.MTF <- c("GUTHRIE AHC - FT DRUM", "IRELAND ACH - FT KNOX" ,"KIMBROUGH AHC
                 "KENNER AHC - FT LEE","MCDONALD AHC - FT EUSTIS" ,"RHC-A","WOMACK AMC - FT BRAGG" ,"BLANCHFIELD ACH - FT CAMPBELL" ,
                 "EISENHOWER AMC - FT GORDON" ,   "FOX ACH - REDSTONE ARSENAL" ,"LYSTER AHC - FT RUCKER" ,  "MONCRIEF ACH - FT JACKSON" ,         
                 "WINN ACH - FT STEWART" ,"KIMBROUGH AHC - FT MEADE"  ,"MARTIN ACH - FT BENNING","KIMBROUGH AHC - FT MEADE" ,"KIMBROUGH AHC - FT MEADE" ,"KIMBROUGH AHC - FT MEADE" ,"REGION" )        
+AHC <- c("GUTHRIE", "IRELAND" ,"KIMBROUGH" ,"KELLER" ,"KENNER","MCDONALD" ,"RHC-A","WOMACK" ,"BLANCHFIELD" ,
+                "EISENHOWER" ,   "FOX" ,"LYSTER" ,  "MONCRIEF" ,         
+                "WINN" ,"KIMBROUGH"  ,"MARTIN","KIMBROUGH" ,"KIMBROUGH" ,"KIMBROUGH" ,"REGION" )        
 #Below for Encounters
 DMISPARENT <- c("0330","0061","0069","0086","0122","0121","RHC-A","0089","0060","0047","0001","0003","0105","0049","0069","0048","0069","0069","0069","REGION")
-Rollup <- as.data.frame(cbind(Site,HRP.name,Facility,UIC,Short,SiteCode,Parent.MTF,DMISPARENT))
+Rollup <- as.data.frame(cbind(Site,HRP.name,Facility,UIC,Short,SiteCode,Parent.MTF,DMISPARENT,AHC))
 Rollup <-Rollup[-c(3,7,17:20), ]
 
 #Change Col Type
@@ -71,11 +74,6 @@ dates<-c(13,15:18,43)
 for (i in dates) {
   x3[ ,i]<-as.POSIXct(x3[ ,i],format = '%m/%d/%Y', tz ="GMT")
 }
-
-#Change Col Type
-#for (i in 1:3) {
-#  x3[ ,i]<-as.factor(x3[ ,i])
-#}
 
 complete.dates = x3[ ,c(1,2,dates)];complete.dates = complete.dates[complete.cases(complete.dates), ]
 
@@ -141,14 +139,48 @@ enc<- merge(enc,match.df, incomparables = NA)
 enc.sum=select(enc, everything()) %>%
   group_by(Short,Parent.MTF,Event.MON) %>%
   summarise(TotalENCTRS = sum(TotalENCTRS))
+#############################
+Pt.bed.days<-read_excel(file.path(data_path,'Patient Days Jan 15 - Apr 16.xlsx'), sheet = 1, col_names = F, col_types = NULL, na = "", skip = 4)
+colnames(Pt.bed.days)<-c("AHC",'2015-1','2015-2','2015-3','2015-4','2015-5','2015-6','2015-7','2015-8','2015-9','2015-10','2015-11','2015-12','2016-1','2016-2','2016-3','2016-4')
+Pt.bed.days$AHC<-toupper(sapply(strsplit(Pt.bed.days$AHC, " "), `[`, 1)) #Remove everything after space
 
+Pt.bed.days<-merge(Pt.bed.days, Rollup)
+Pt.bed.days<-Pt.bed.days[-9:-10, -c(1,18:21,23:25) ]
+
+Pt.bed.days<-gather(Pt.bed.days,key=Event.MON, value=Bed.Days, -Short)
+#x3=merge(x3, Pt.bed.days)
 x3$Short = as.factor(x3$Short); x3$Parent.MTF = as.factor(x3$Parent.MTF);x3$Number.of.times.occurred=as.numeric(x3$Number.of.times.occurred)
 
 harm = c('None','Near','Mild','Unsafe','Not Labeled','Moderate','Severe')
 #harm=as.list(unique(x3$Degree.of.harm))
 x4=x3[complete.cases(x3$Drug.administered), ] 
+###UPDATE FEEDBACK
+#All Harm is a faceted chart and update the Event Ratio
+x3.sum = select(x3, everything()) %>%
+   # filter(Degree.of.harm== "Mild" )%>%
+    group_by(Short,Degree.of.harm,Event.MON) %>%
+    summarise(Total.Events.ID = sum(Number.of.times.occurred))
+  nam=paste("Events per 1000 Encounters, by harm.png", sep = "")
+  tit=paste("Events per 1000 Encounters", sep="")
+  rat.sum=merge(x3.sum,enc.sum)
+  rat.sum$ratio=round(rat.sum$Total.Events.ID/(rat.sum$TotalENCTRS/1000),2)
+  rat.sum=rat.sum[complete.cases(rat.sum$TotalENCTRS), ] 
+  meancalc=format(round(mean(rat.sum$ratio),2))
+  rat.sum$Short<-reorder(rat.sum$Short, rat.sum$ratio)
+  ggplot(rat.sum, aes(Short,ratio, fill=Degree.of.harm)) + geom_bar(stat='identity')+
+    #geom_text(aes(label = Value, y = Value*1.05), size = 3) +
+    facet_grid(Degree.of.harm ~ . , scales = 'free') + #scales = 'free'
+    ggtitle(tit) +
+    xlab("MTF ") +
+    ylab("Harm Rate (Events per 1000 Encounters)") +
+    geom_text(aes(label = ratio, y = ratio *1.051), size = 3) +
+    geom_hline(aes(yintercept = as.numeric(format(round(mean(rat.sum$ratio),2))))) +
+    annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Event Rate per 1000 Encounters is ",meancalc,sep = "")) +
+    theme(legend.position = "left", axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
+  ggsave(file.path(out_path,nam),width=12)
 
 for (i in harm) {
+  i=harm[2]
   x3.sum = select(x3, everything()) %>%
     filter(Degree.of.harm== i)%>%
     group_by(Short,Degree.of.harm,Event.MON) %>%
@@ -162,13 +194,13 @@ for (i in harm) {
   rat.sum$Short<-reorder(rat.sum$Short, rat.sum$ratio)
   ggplot(rat.sum, aes(Short,ratio, fill=Degree.of.harm)) + geom_bar(stat='identity')+
     #geom_text(aes(label = Value, y = Value*1.05), size = 3) +
-    #facet_grid(PSR.Date ~ . , scales = 'free') + #scales = 'free'
+    facet_grid( ~ Degree.of.harm , scales = 'free') + #scales = 'free'
     ggtitle(tit) +
     xlab("MTF ") +
     ylab("Ratio") +
     geom_text(aes(label = ratio, y = ratio +.051), size = 3) +
     geom_hline(aes(yintercept = as.numeric(format(round(mean(rat.sum$ratio),2))))) +
-    annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Avg. Ratio is ",meancalc,sep = "")) +
+    annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Event Rate per 1000 Encounters is ",meancalc,sep = "")) +
     theme(legend.position = "bottom", axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
   ggsave(file.path(out_path,nam),width=12)
 }
@@ -178,8 +210,10 @@ x3.sum = select(x3, everything()) %>%
   #filter(Degree.of.harm== i)%>%
   group_by(Short,Event.MON) %>%
   summarise(Total.Events.ID = length(Number.of.times.occurred))
-nam=paste(i, " Events.png", sep = "")
-tit=paste(i," ", sep="")
+#nam=paste(i, " Events.png", sep = "")
+#tit=paste(i," ", sep="")
+nam="All events, prior name All Harm Events.png"
+tit="All Events"
 rat.sum=merge(x3.sum,enc.sum)
 rat.sum$ratio=round(rat.sum$Total.Events.ID/(rat.sum$TotalENCTRS/1000),2)
 rat.sum=rat.sum[complete.cases(rat.sum$TotalENCTRS), ] 
