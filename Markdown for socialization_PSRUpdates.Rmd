@@ -1,0 +1,41 @@
+---
+title: "PSR Update"
+author: "Trask, Stephen M"
+date: "May 13, 2016"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## PSR Updates from team meeting 5 May 2016
+
+The process of creating data visualizations, dashboards and answering queries is expected to be an interative process.  This document is intended to share the methodology behind the data viz options and the incorporation of changes.
+
+#Data Aggregation
+The data used in this analysis is from the PSR system, downloaded by a MEDCOM POC.  The data includes all RHC-A facilities from January 2014 - December 2015.  Patient bed days is included from January 2015 - April 2016.  Total Encounters is included for December 2015 and January 2016.
+
+Once aggregated, December 2015 is the only data displayed in the visualizations.
+
+#Data Questions
+Total Encounters values are in 1000s, is the same true for Patient Bed Days.
+All visualizations inclued inpatient and outpatient events. Do we wish to filter for one versus the other?
+
+#Visualizations
+```{r}
+enc.harm
+
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

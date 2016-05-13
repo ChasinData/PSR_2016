@@ -27,8 +27,8 @@ dir.create(file.path(cleaned_path), showWarnings = FALSE, recursive = FALSE, mod
 dir.create(file.path(data_path), showWarnings = FALSE, recursive = FALSE, mode = "0777")
 dir.create(file.path(share_path), showWarnings = FALSE, recursive = FALSE, mode = "0777")
 
-load(file.path(data.path, "PSRPrelim.RData"))
-save(file.path(data.path, "PSRPrelim.rds"))
+load("PSRPrelim.rds")
+#save("PSRPrelim.rds")
 
 x3$Event.MON=as.character(x3$Event.MON)
 #x3=filter(x3, x31$Event.MON=="2015-12")  #This is crashing system... why?
@@ -74,7 +74,7 @@ rat.sum=x3.sum[complete.cases(x3.sum), ]
   tit=paste("Harm Events (mild, moderate, severe) per 1000 Encounters", sep="")
   meancalc=format(round(mean(rat.sum$Ratio.EE),2))
   rat.sum$Short<-reorder(rat.sum$Short, rat.sum$Ratio.EE)
-  ggplot(rat.sum, aes(Short,Ratio.EE, fill=Degree.of.harm)) + geom_bar(stat='identity')+
+ enc.harm<- ggplot(rat.sum, aes(Short,Ratio.EE, fill=Degree.of.harm)) + geom_bar(stat='identity')+
     #geom_text(aes(label = Value, y = Value*1.05), size = 3) +
     facet_grid(Degree.of.harm ~ . , scales = 'free') + #scales = 'free'
     ggtitle(tit) +
@@ -84,6 +84,7 @@ rat.sum=x3.sum[complete.cases(x3.sum), ]
     #geom_hline(aes(yintercept = as.numeric(format(round(mean(rat.sum$ratio),2))))) +
     #annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Event Rate per 1000 Encounters is ",meancalc,sep = "")) +
     theme(legend.position = "left", axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
+  enc.harm
   ggsave(file.path(out_path,nam),width=12)
   
 #All Harm is a faceted chart and by Bed.Days
@@ -136,7 +137,7 @@ rat.sum=x3.sum[complete.cases(x3.sum), ]
     ggtitle(tit) +
     xlab("MTF ") +
     ylab("% Harm for each Near Miss") +
-    #geom_text(aes(label = ratio, y = ratio *1.051), size = 3) +
+    geom_text(aes(label = ratio, y = ratio +.051), size = 3) +
     #geom_hline(aes(yintercept = as.numeric(format(round(mean(rat.sum$ratio),2))))) +
     #annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Event Rate per 1000 Encounters is ",meancalc,sep = "")) +
     theme(legend.position = "left", axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
@@ -181,11 +182,11 @@ rat.sum=x3.sum[complete.cases(x3.sum), ]
   
 #All Events  that are NOT LABELED
   tmp = select(x3, everything()) %>%
-    tmp.harm = select(x3, everything()) %>%
+    
     filter(Degree.of.harm== "Not Labeled") %>%
     group_by(Short) %>%
-    summarise(Number.PSRDatix = count(PSR.),
-              Total.Events = sum(Number.of.times.occurred))
+    summarise(Number.PSRDatix = length(PSR.),
+              Total.Events.NotLabeled = sum(Number.of.times.occurred))
   
   tmp.2 = select(x3, everything()) %>%
     group_by(Short) %>%
@@ -193,12 +194,12 @@ rat.sum=x3.sum[complete.cases(x3.sum), ]
   
   x3.sum=merge(tmp, tmp.2)
   
-  x3.sum$ratio=round(x3.sum$'Number.PSRDatix'/x3.sum$Total.Events,2)
+  x3.sum$ratio=round(x3.sum$'Total.Events.NotLabeled'/x3.sum$Total.Events,2)
   
   rat.sum=x3.sum[complete.cases(x3.sum), ] 
   
   nam=paste(" Percent Total Events Not Labeled in Degree of Harm.png", sep = "")
-  tit=paste("Total Events Not Labeled in Degree of Harm", sep="")
+  tit=paste("Total Events Not Labeled in Degree of Harm Field", sep="")
   meancalc=format(round(mean(rat.sum$ratio),2))
   rat.sum$Short<-reorder(rat.sum$Short, rat.sum$ratio)
   ggplot(rat.sum, aes(Short,ratio, fill=Short)) + geom_bar(stat='identity')+
@@ -207,7 +208,7 @@ rat.sum=x3.sum[complete.cases(x3.sum), ]
     ggtitle(tit) +
     xlab("MTF ") +
     ylab("Percent of Events not labeled") +
-    geom_text(aes(label = ratio, y = ratio *1.151), size = 3) +
+    geom_text(aes(label = ratio, y = ratio +.03), size = 3) +
    # geom_hline(aes(yintercept = .5)) +
     #annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Near Miss Events/All Events")) +
     theme(legend.position = "left", axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
@@ -217,23 +218,149 @@ rat.sum=x3.sum[complete.cases(x3.sum), ]
 # Count Variant
   nam=paste(" Count of Total Events Not Labeled in Degree of Harm.png", sep = "")
   tit=paste("Total Events Not Labeled in Degree of Harm", sep="")
-  meancalc=format(round(mean(rat.sum$'Number.PSR+Datix'),2))
-  rat.sum$Short<-reorder(rat.sum$Short, rat.sum$ratio)
-  ggplot(rat.sum, aes(Short,Number.PSR+Datix, fill=Short)) + geom_bar(stat='identity')+
+  meancalc=format(round(mean(rat.sum$'Total.Events.NotLabeled'),2))
+  rat.sum$Short<-reorder(rat.sum$Short, rat.sum$Total.Events.NotLabeled)
+  ggplot(rat.sum, aes(Short,Total.Events.NotLabeled, fill=Short)) + geom_bar(stat='identity')+
     #geom_text(aes(label = Value, y = Value*1.05), size = 3) +
     #facet_grid(Degree.of.harm ~ . , scales = 'free') + #scales = 'free'
     ggtitle(tit) +
     xlab("MTF ") +
     ylab("Number of Events not labeled") +
-    geom_text(aes(label = 'Number.PSR+Datix', y = ratio *1.151), size = 3) +
+    geom_text(aes(label = Total.Events.NotLabeled, y = Total.Events.NotLabeled +.4), size = 3) +
     # geom_hline(aes(yintercept = .5)) +
     #annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Near Miss Events/All Events")) +
     theme(legend.position = "left", axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
   ggsave(file.path(out_path,nam),width=12) 
   
+#Time Series of Events (Median Based) filtered for degree of harm
+  tmp = select(x3, everything()) %>%
+    filter(Degree.of.harm== "Mild" | 
+             Degree.of.harm== "Moderate" |
+             Degree.of.harm== "Severe" )%>%
+    group_by(Short) %>%
+    summarise(Event.til.Opened = median(Event2Opened),
+              Opened.til.Closed= median(Opened2Closed))
+  tmp=gather(tmp,key=Time, value=Value, -Short)
+  tmp$type="Median"
   
   
+  tmp.2 =  select(x3, everything()) %>%
+    filter(Degree.of.harm== "Mild" | 
+             Degree.of.harm== "Moderate" |
+             Degree.of.harm== "Severe" )%>%
+    group_by(Short) %>%
+    summarise(Event.til.Opened = mean(Event2Opened),
+              Opened.til.Closed = mean(Opened2Closed))
+  tmp.2=gather(tmp.2,key=Time, value=Value, -Short)
+  tmp.2$type="Mean"
+  x3.sum=rbind(tmp, tmp.2)
   
+  rat.sum=x3.sum[complete.cases(x3.sum), ] 
+  rat.sum$Value<-round(rat.sum$Value)
+  
+  nam=paste("Time to Open and Close.png", sep = "")
+  tit=paste("Time to Open and Close", sep="")
+  ggplot(rat.sum, aes(Time, Value, fill=type)) + geom_bar(stat='identity')+
+    #geom_text(aes(label = Value, y = Value*1.05), size = 3) +
+    facet_grid( Short ~ type , scales = 'free') + #scales = 'free'
+    ggtitle(tit) +
+    xlab(" ") +
+    ylab("Business Days") +
+    geom_text(aes(label = Value, y = Value +.03), size = 3) +
+    coord_flip() +
+  # geom_hline(aes(yintercept = .5)) +
+    #annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Near Miss Events/All Events")) +
+    theme(legend.position = "none", strip.text.y = element_text(angle=0), axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
+  ggsave(file.path(out_path,nam),width=12)  
+  
+  #Count of events opened, greater than XX Days
+  x=5  #Number of days
+  tmp = select(x3, everything()) %>%
+    filter(Days.Since.Opened> x)%>%
+    group_by(Short) %>%
+    summarise(Open.PSR = length(Days.Since.Opened),
+              Median.OpenTime = median(Days.Since.Opened),
+              Mean.OpenTime = mean(Days.Since.Opened)) 
+  tmp=gather(tmp,key=Time, value=Value, -Short)
+
+  x3.sum=tmp
+  
+  rat.sum=x3.sum[complete.cases(x3.sum), ] 
+  rat.sum$Value<-round(rat.sum$Value)
+  
+  nam=paste("Open PSRs for ", x," Days.png", sep = "")
+  tit=paste("PSRs Open Beyond ",x," days", sep="")
+  ggplot(rat.sum, aes(Time, Value, fill = Time)) + geom_bar(stat='identity')+
+    #geom_text(aes(label = Value, y = Value*1.05), size = 3) +
+    facet_grid( Short ~ . , scales = 'free') + #scales = 'free'
+    ggtitle(tit) +
+    xlab(" ") +
+    ylab("Business Days") +
+    geom_text(aes(label = Value, y = Value +.03), size = 3) +
+    coord_flip() +
+    # geom_hline(aes(yintercept = .5)) +
+    #annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Near Miss Events/All Events")) +
+    theme(legend.position = "none", strip.text.y = element_text(angle=0), axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
+  ggsave(file.path(out_path,nam),width=12)  
+  
+  x=15  #Number of days
+  tmp = select(x3, everything()) %>%
+    filter(Days.Since.Opened> x)%>%
+    group_by(Short) %>%
+    summarise(Open.PSR = length(Days.Since.Opened),
+              Median.OpenTime = median(Days.Since.Opened),
+              Mean.OpenTime = mean(Days.Since.Opened)) 
+  tmp=gather(tmp,key=Time, value=Value, -Short)
+  
+  x3.sum=tmp
+  
+  rat.sum=x3.sum[complete.cases(x3.sum), ] 
+  rat.sum$Value<-round(rat.sum$Value)
+  
+  nam=paste("Open PSRs for ", x," Days.png", sep = "")
+  tit=paste("PSRs Open Beyond ",x," days", sep="")
+  ggplot(rat.sum, aes(Time, Value, fill = Time)) + geom_bar(stat='identity')+
+    #geom_text(aes(label = Value, y = Value*1.05), size = 3) +
+    facet_grid( Short ~ . , scales = 'free') + #scales = 'free'
+    ggtitle(tit) +
+    xlab(" ") +
+    ylab("Business Days") +
+    geom_text(aes(label = Value, y = Value +.03), size = 3) +
+    coord_flip() +
+    # geom_hline(aes(yintercept = .5)) +
+    #annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Near Miss Events/All Events")) +
+    theme(legend.position = "none", strip.text.y = element_text(angle=0), axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
+  ggsave(file.path(out_path,nam),width=12)  
+  
+###### Events not opened
+  x3$Days.Since.Event = difftime( Sys.Date(), x3$Event.date, 'days')
+  tmp = select(x3, everything()) %>%
+    filter(is.na(Opened.date)) %>%
+    group_by(Short) %>%
+    summarise(Events = length(Days.Since.Opened),
+              Mean.Days.Since.Event = mean(Days.Since.Event),
+              Median.Days.Since.Event = median(Days.Since.Event))
+  tmp=gather(tmp,key=Time, value=Value, -Short)
+  
+  x3.sum=tmp
+  
+  rat.sum=x3.sum[complete.cases(x3.sum), ] 
+  rat.sum$Value<-round(rat.sum$Value)
+  
+  nam=paste("PSRs not yet opened.png", sep = "")
+  tit=paste("PSRs not yet opened", sep="")
+  ggplot(rat.sum, aes(Time, Value, fill = Time)) + geom_bar(stat='identity')+
+    #geom_text(aes(label = Value, y = Value*1.05), size = 3) +
+    facet_grid( Short ~ . , scales = 'free') + #scales = 'free'
+    ggtitle(tit) +
+    xlab(" ") +
+    ylab("Business Days") +
+    geom_text(aes(label = Value, y = Value +.03), size = 3) +
+    coord_flip() +
+    # geom_hline(aes(yintercept = .5)) +
+    #annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Near Miss Events/All Events")) +
+    theme(legend.position = "none", strip.text.y = element_text(angle=0), axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
+  ggsave(file.path(out_path,nam),width=12)  
   
   
   
