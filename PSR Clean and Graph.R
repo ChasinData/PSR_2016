@@ -13,7 +13,7 @@ proj_name = "PSR Project"
 base_path="U:/NRMC/Data Science"
 SP_path="Y:/"
 
-
+setwd('h:/Code Source/PSR_2016')
 #set project path
 proj_path = paste(base_path,"/",proj_name,sep = "")
 out_path = file.path(proj_path, "Output")
@@ -120,7 +120,7 @@ x3=merge(x3, match.df, all=T)
 x3=merge(x3, Pt.bed.days,  all=T)
 x3=merge(x3, enc.sum, all=T)
 save(x3, file='PSRPrelim.RDS')
-x3=filter(x3, x31$Event.MON == "2015-12")
+x3=filter(x3, x3$Event.MON == "2015-12")
 
 #### Further Calcs
 #Total Events (GCount of Unique PSR + DATIX)
@@ -175,7 +175,7 @@ x3.sum = select(x3, everything()) %>%
   
 #All Harm is a faceted chart and by Bed.Days
   x3$Event.MON=as.character(x3$Event.MON)
-  x3.sum = select(x3.Dec, everything()) %>%
+  x3.sum = select(x3, everything()) %>%
     filter(Degree.of.harm== "Mild" | 
              Degree.of.harm== "Moderate" |
              Degree.of.harm== "Severe" )%>%
@@ -268,29 +268,29 @@ x3.sum = select(x3, everything()) %>%
     summarise(Total.NearMiss.Events = sum(Number.of.times.occurred))
   x3.sum=merge(x3.sum.miss,x3.sum.harm, by = c("Short","Event.MON"))
   #Total for the same period
-  x3.sum2= select(x3, everything()) %>%
-    group_by(Short) %>%
-    summarise(Harm.Miss.Ratio = sum(Total.Harm.Events)/sum(Total.NearMiss.Events))
+#  x3.sum2= select(x3.sum, everything()) %>%
+##    group_by(Short) %>%
+ #   summarise(Harm.Miss.Ratio = sum(Total.Harm.Events)/sum(Total.NearMiss.Events))
   
-  x3.sum$Harm.Miss.Ratio=x3$Total.Harm.Events/x3$Total.NearMiss.Events
-  rat.sum=rat.sum[complete.cases(rat.sum$Total.Bed.Days), ] 
+  x3.sum$Harm.Miss.Ratio=x3.sum$Total.Harm.Events/x3.sum$Total.NearMiss.Events
+  rat.sum=x3.sum
+  rat.sum=filter(rat.sum, Short!="GORDON")
+  rat.sum=rat.sum[complete.cases(rat.sum$Harm.Miss.Ratio), ] 
   
-  nam=paste("All Events per 1000 Encounters.png", sep = "")
-  tit=paste("All Events per 1000 Encounters", sep="")
-  rat.sum=merge(x3.sum,enc.sum)
-  rat.sum$ratio=round(rat.sum$Total.Events.ID/(rat.sum$TotalENCTRS/1000),2)
-  rat.sum=rat.sum[complete.cases(rat.sum$TotalENCTRS), ] 
-  meancalc=format(round(mean(rat.sum$ratio),2))
-  rat.sum$Short<-reorder(rat.sum$Short, rat.sum$ratio)
-  ggplot(rat.sum, aes(Short,ratio, fill=Degree.of.harm)) + geom_bar(stat='identity')+
-    #geom_text(aes(label = Value, y = Value*1.05), size = 3) +
+  nam=paste("Total Harm by Near Miss.png", sep = "")
+  tit=paste("Harm Events for each Near Miss Event", sep="")
+  
+  meancalc=format(round(mean(rat.sum$Harm.Miss.Ratio),2))
+  rat.sum$Short<-reorder(rat.sum$Short, rat.sum$Harm.Miss.Ratio)
+  ggplot(rat.sum, aes(Short,Harm.Miss.Ratio, fill=Short)) + geom_bar(stat='identity')+
+    geom_text(aes(label = round(Harm.Miss.Ratio, 2), y = Harm.Miss.Ratio*1.05), size = 3) +
     #facet_grid(Degree.of.harm ~ . , scales = 'free') + #scales = 'free'
     ggtitle(tit) +
     xlab("MTF ") +
-    ylab("Event Rate (Events per 1000 Encounters)") +
+    ylab("Event Rate (Event Rate with Harm, for each Near Miss Event)") +
     #geom_text(aes(label = ratio, y = ratio *1.051), size = 3) +
     #geom_hline(aes(yintercept = as.numeric(format(round(mean(rat.sum$ratio),2))))) +
-    #annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Event Rate per 1000 Encounters is ",meancalc,sep = "")) +
+    annotate("text", 2, .5, label = paste("Gorden (52) removed to show scale",sep = "")) +
     theme(legend.position = "left", axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
   ggsave(file.path(out_path,nam),width=12)
   

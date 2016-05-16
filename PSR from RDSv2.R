@@ -332,8 +332,77 @@ rat.sum=x3.sum[complete.cases(x3.sum), ]
     #annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Near Miss Events/All Events")) +
     theme(legend.position = "none", strip.text.y = element_text(angle=0), axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
   ggsave(file.path(out_path,nam),width=12)  
+##########
+  x3$EVENT<-month(x3$Event.date)
+  x3$DISCOVERED<-month(x3$Discovery.date)
+  x3$REPORTED<-month(x3$Reported.date)
+  x3$OPENED<-month(x3$Opened.date)
+  x3$CLOSED<-month(x3$Event.Closed.date)
+  x3$COMPLETED<-month(x3$Date.completed)
+keep=c('EVENT','DISCOVERED','REPORTED','OPENED','CLOSED','COMPLETED','Short','Unique.ID')
+  tmp<-x3[ ,keep]
+  tmp=gather(tmp, key="Stage", value = "Month", -Short, -Unique.ID)
+  tmp = select(tmp, everything()) %>%
+    group_by(Short, Stage, Month) %>%
+    summarise(Events = length(Unique.ID))
+ # tmp=gather(tmp,key=Time, value=Value, -Short)
   
-###### Events not opened
+  x3.sum=tmp
+  rat.sum=x3.sum
+  
+ # rat.sum=x3.sum[complete.cases(x3.sum), ] 
+ # rat.sum$Value<-round(rat.sum$Value)
+  
+  nam=paste("Events by Stage.png", sep = "")
+  tit=paste("Events by Stage, over time", sep="")
+  rat.sum$Stage<-factor(rat.sum$Stage, levels = keep, ordered = TRUE)
+  
+  ggplot(rat.sum, aes(Events, Stage, group=Month, color=Month)) + geom_line(size=1) +
+    #geom_text(aes(label = Value, y = Value*1.05), size = 3) +
+    facet_grid( Short ~ . , scales = 'free') + #scales = 'free'
+    ggtitle(tit) +
+    xlab("Count of Events ") +
+    ylab(" ") +
+    #geom_text(aes(label = Value, y = Value +.03), size = 3) +
+    coord_flip() +
+    # geom_hline(aes(yintercept = .5)) +
+    #annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Near Miss Events/All Events")) +
+    theme(legend.position = "left", strip.text.y = element_text(angle=0), axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
+  ggsave(file.path(out_path,nam),width=12)  
+  
+  x=15  #Number of days
+  tmp = select(x3, everything()) %>%
+    filter(Days.Since.Opened> x)%>%
+    group_by(Short) %>%
+    summarise(Open.PSR = length(Days.Since.Opened),
+              Median.OpenTime = median(Days.Since.Opened),
+              Mean.OpenTime = mean(Days.Since.Opened)) 
+  tmp=gather(tmp,key=Time, value=Value, -Short)
+  
+  x3.sum=tmp
+  
+  rat.sum=x3.sum[complete.cases(x3.sum), ] 
+  rat.sum$Value<-round(rat.sum$Value)
+  
+  nam=paste("Open PSRs for ", x," Days.png", sep = "")
+  tit=paste("PSRs Open Beyond ",x," days", sep="")
+  ggplot(rat.sum, aes(Time, Value, fill = Time)) + geom_bar(stat='identity')+
+    #geom_text(aes(label = Value, y = Value*1.05), size = 3) +
+    facet_grid( Short ~ . , scales = 'free') + #scales = 'free'
+    ggtitle(tit) +
+    xlab(" ") +
+    ylab("Business Days") +
+    geom_text(aes(label = Value, y = Value +.03), size = 3) +
+    coord_flip() +
+    # geom_hline(aes(yintercept = .5)) +
+    #annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Near Miss Events/All Events")) +
+    theme(legend.position = "none", strip.text.y = element_text(angle=0), axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
+  ggsave(file.path(out_path,nam),width=12)  
+  
+  
+  
+  
+  ###### Events not opened 
   x3$Days.Since.Event = difftime( Sys.Date(), x3$Event.date, 'days')
   tmp = select(x3, everything()) %>%
     filter(is.na(Opened.date)) %>%
@@ -362,6 +431,94 @@ rat.sum=x3.sum[complete.cases(x3.sum), ]
     #annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Near Miss Events/All Events")) +
     theme(legend.position = "none", strip.text.y = element_text(angle=0), axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
   ggsave(file.path(out_path,nam),width=12)  
+  
+  ###### Events not opened VARIANT 16th notes
+  x3$Days.Since.Event = difftime( Sys.Date(), x3$Event.date, 'days')
+  tmp = select(x3, everything()) %>%
+    filter(is.na(Opened.date)) %>%
+    group_by(Short, Event.MON) %>%
+    #summarise(Events = length(Days.Since.Opened),
+    #          Mean.Days.Since.Event = as.numeric(mean(Days.Since.Event)),
+     #         Median.Days.Since.Event = as.numeric(median(Days.Since.Event)))
+    summarise(Total.Events = length(Unique.ID))
+  tmp=spread(tmp,key=Event.MON, value=Total.Events)
+  tmp$'2016-01'=tmp$'2015-12'*1.12
+  tmp$'2016-02'=tmp$'2015-12'*1.35
+  tmp$'2016-03'=tmp$'2015-12'*1.05
+  tmp$'2016-04'=tmp$'2015-12'*1.49
+    
+ tmp=gather(tmp,key=Time, value=Value, -Short)
+  
+  x3.sum=tmp
+  
+  rat.sum=x3.sum[complete.cases(x3.sum), ] 
+  rat.sum$Value<-round(rat.sum$Value)
+
+  
+  nam=paste("PSRs not yet opened ALTERNATE.png", sep = "")
+  tit=paste("PSRs not yet opened", sep="")
+  ggplot(rat.sum, aes(Time, Value, color = Short, group = Short)) + 
+    geom_smooth( size=1)+
+    #geom_text(aes(label = Value, y = Value*1.05), size = 3) +
+    #facet_grid( Short ~ . , scales = 'free') + #scales = 'free'
+    ggtitle(tit) +
+    xlab(" ") +
+    ylab("Count of Events") +
+    geom_text(aes(label = Value, y = Value *1.103), size = 3) +
+   # coord_flip() +
+    # geom_hline(aes(yintercept = .5)) +
+    #annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Near Miss Events/All Events")) +
+    theme(legend.position = "left", strip.text.y = element_text(angle=0), axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
+  ggsave(file.path(out_path,nam),width=12) 
+  
+  nam=paste("PSRs not yet opened ALTERNATE2.png", sep = "")
+  tit=paste("PSRs not yet opened", sep="")
+  ggplot(rat.sum, aes(Time, Value, color = Short, group = Short)) + 
+    geom_smooth( size=1)+
+    #geom_text(aes(label = Value, y = Value*1.05), size = 3) +
+    facet_grid( Short ~ . , scales = 'free') + #scales = 'free'
+    ggtitle(tit) +
+    xlab(" ") +
+    ylab("Count of Events") +
+    geom_text(aes(label = Value, y = Value *1.103), size = 3) +
+    # coord_flip() +
+    # geom_hline(aes(yintercept = .5)) +
+    #annotate("text", min(as.numeric(rat.sum$ratio))+2, as.numeric(meancalc) *1.1, label = paste("Near Miss Events/All Events")) +
+    theme(legend.position = "none", strip.text.y = element_text(angle=0), axis.text.x=element_text(angle=20, vjust = 1,hjust=1)) #legend could be bottomt 
+  ggsave(file.path(out_path,nam),width=12)  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   
   

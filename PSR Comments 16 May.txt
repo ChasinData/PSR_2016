@@ -1,0 +1,27 @@
+PSRs not yet opened. (Create alternate)  *Mary
+X is months
+Y is Values (sum of events)
+Data Group is MTF (consider facets)
+
+Steve to email Dana today. (re: Access)
+
+Time to open and close (create alternate)
+
+Consider Stage on Y axis
+Months on X axis
+Group by Months 
+Can we add submitted to the stage (submitted to PSR).
+Data expression will be mean, add a median alternate a well, add a min and max, 
+look at quintile (bottom and top, think ANOVA Model) Add a avg. for Region?.
+Viz as line graph.
+
+Check Carlisle Meade relationship in HRP DF
+
+Bed day data = filter by inpatient only. add to key
+
+
+Encounters = filter by outpatient only. add to keyi 
+
+
+
+

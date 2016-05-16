@@ -151,7 +151,8 @@ x4=x3[complete.cases(x3$Drug.administered), ]
 x3.sum = select(x3, everything()) %>%
     filter(Degree.of.harm== "Mild" | 
              Degree.of.harm== "Moderate" |
-             Degree.of.harm== "Severe" )%>%
+             Degree.of.harm== "Severe" &
+             Patient.Status == "Outpatient")%>%
     group_by(Short,Degree.of.harm,Event.MON) %>%
     summarise(Total.Events.ID = sum(Number.of.times.occurred))
   nam=paste("Events per 1000 Encounters, by harm.png", sep = "")
@@ -178,7 +179,8 @@ x3.sum = select(x3, everything()) %>%
   x3.sum = select(x3, everything()) %>%
     filter(Degree.of.harm== "Mild" | 
              Degree.of.harm== "Moderate" |
-             Degree.of.harm== "Severe" )%>%
+             Degree.of.harm== "Severe" &
+             Patient.Status == "Inpatient")%>%
     group_by(Short,Degree.of.harm,Event.MON) %>%
     summarise(Total.Events.ID = sum(Number.of.times.occurred), Total.Bed.Days=sum(Bed.Days))
   nam=paste("Events per 1000 Bed Days, by harm.png", sep = "")
@@ -203,9 +205,7 @@ x3.sum = select(x3, everything()) %>%
   
 #All Events chart and update the Event Ratio
   x3.sum = select(x3, everything()) %>%
-   # filter(Degree.of.harm== "Mild" | 
-   #          Degree.of.harm== "Moderate" |
-    #         Degree.of.harm== "Severe" )%>%
+    filter(Patient.Status=="Outpatient" )%>%
     group_by(Short,Degree.of.harm,Event.MON) %>%
     summarise(Total.Events.ID = sum(Number.of.times.occurred))
   nam=paste("All Events per 1000 Encounters.png", sep = "")
@@ -229,9 +229,7 @@ x3.sum = select(x3, everything()) %>%
   
   #All Events chart and by Bed.Days
   x3.sum = select(x3, everything()) %>%
-   # filter(Degree.of.harm== "Mild" | 
-    #         Degree.of.harm== "Moderate" |
-    #         Degree.of.harm== "Severe" )%>%
+    filter(Patient.Status== "Inpatient" )%>%
     group_by(Short,Degree.of.harm,Event.MON) %>%
     summarise(Total.Events.ID = sum(Number.of.times.occurred), Total.Bed.Days=sum(Bed.Days))
   nam=paste("All Events per 1000 Bed Days.png", sep = "")
@@ -323,7 +321,7 @@ x3.sum = select(x3, everything()) %>%
 for (i in harm) {
   i=harm[2]
   x3.sum = select(x3, everything()) %>%
-    filter(Degree.of.harm== i)%>%
+    filter(Degree.of.harm== i )%>%
     group_by(Short,Degree.of.harm,Event.MON) %>%
     summarise(Total.Events.ID = sum(Number.of.times.occurred))
   nam=paste(i, " Events Ratios.png", sep = "")
