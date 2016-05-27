@@ -7,7 +7,7 @@ Steve to email Dana today. (re: Access)
 
 Time to open and close (create alternate)
 
-Consider Stage on Y axis
+Consider Stage on Y axis  LINE 336
 Months on X axis
 Group by Months 
 Can we add submitted to the stage (submitted to PSR).
@@ -17,10 +17,17 @@ Viz as line graph.
 
 Check Carlisle Meade relationship in HRP DF
 
-Bed day data = filter by inpatient only. add to key
+Bed day data = filter by inpatient only. add to key #On prep done
 
 
-Encounters = filter by outpatient only. add to keyi 
+Encounters = filter by outpatient only. add to keyi #On prep done
+
+EVENT
+DISCOVERED
+REPORTED
+OPEND
+CLOSED
+COMPLETED
 
 
 

@@ -49,9 +49,6 @@ date <- Sys.Date()
 #x1=read_excel(i1, sheet = 1, col_names = TRUE, col_types = NULL, na = "", skip = 0)
 #x2=read.csv(i2, header = TRUE, sep = ",")
 x3=read.csv(i3, header = TRUE, sep = ",", na.strings = "",colClasses = "character")
-Pt.bed.days<-read_excel(file.path(data_path,'Patient Days Jan 15 - Apr 16.xlsx'), sheet = 1, col_names = F, col_types = NULL, na = "", skip = 4)
-#Total Encounters
-enc=read_excel(file.path(data_path,"Encounters PSR Project.xlsx"), sheet = 2, col_names = TRUE, col_types = NULL, na = "", skip = 0)
 
 
 ####CLEAN PRIMARY PSR DATA (X3)
